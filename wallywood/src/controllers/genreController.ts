@@ -3,34 +3,92 @@ import type { Request, Response } from 'express';
 
 const prisma = new PrismaClient();
 
-
-const createSlug = (text: string): string => {
-    return text.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-};
-
-export const createGenre = async (req: Request, res: Response): Promise<void> => {
+// GET all genres
+export const getAllGenres = async (req: Request, res: Response) => {
     try {
-        const { name } = req.body;
-        
-       
-        const newGenre = await prisma.genre.create({ 
-            data: { 
-                name: name,
-                slug: createSlug(name) 
-            } 
+        const genres = await prisma.genre.findMany({
+            include: {
+                posters: true
+            }
         });
-        
-        res.status(201).json(newGenre);
+
+        res.json(genres);
     } catch (error) {
-        res.status(400).json({ message: "Kunne ikke oprette genre", error });
+        res.status(500).json({ message: "Failed to fetch genres", error });
     }
 };
 
-export const getAllGenres = async (req: Request, res: Response): Promise<void> => {
+// GET genre by id
+export const getGenreById = async (req: Request, res: Response) => {
     try {
-        const genres = await prisma.genre.findMany();
-        res.status(200).json(genres);
+        const id = Number(req.params.id);
+
+        const genre = await prisma.genre.findUnique({
+            where: { id },
+            include: {
+                posters: true
+            }
+        });
+
+        if (!genre) {
+            return res.status(404).json({ message: "Genre not found" });
+        }
+
+        res.json(genre);
     } catch (error) {
-        res.status(500).json({ message: "Fejl ved hentning af genrer", error });
+        res.status(500).json({ message: "Failed to fetch genre", error });
+    }
+};
+
+// CREATE genre
+export const createGenre = async (req: Request, res: Response) => {
+    try {
+        const { name, slug } = req.body;
+
+        const newGenre = await prisma.genre.create({
+            data: {
+                name,
+                slug
+            }
+        });
+
+        res.status(201).json(newGenre);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to create genre", error });
+    }
+};
+
+// UPDATE genre
+export const updateGenre = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const { name, slug } = req.body;
+
+        const updatedGenre = await prisma.genre.update({
+            where: { id },
+            data: {
+                name,
+                slug
+            }
+        });
+
+        res.json(updatedGenre);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to update genre", error });
+    }
+};
+
+// DELETE genre
+export const deleteGenre = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+
+        await prisma.genre.delete({
+            where: { id }
+        });
+
+        res.json({ message: "Genre deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to delete genre", error });
     }
 };

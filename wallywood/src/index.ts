@@ -1,28 +1,36 @@
 import express from 'express';
 import dotenv from 'dotenv';
 
+// Konfigurer miljøvariabler (skal ske før alt andet)
+dotenv.config();
 
-// Importer dine rute-filer (du skal have oprettet disse filer i /src/routes/)
+// Importer alle rute-filer
 import posterRoutes from './routes/posterRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import genreRoutes from './routes/genreRoutes.js';
-// Tilføj dine andre ruter her, f.eks. ratingRoutes, cartRoutes osv.
+import cartRoutes from './routes/cartRoutes.js';
+import ratingRoutes from './routes/ratingRoutes.js';
 
-// Konfigurer miljøvariabler
-dotenv.config();
+// Importer auth route (login endpoint)
+import { Router } from 'express';
+import { login } from './controllers/authController.js';
+
+const authRouter = Router();
+authRouter.post('/login', login);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(express.json());
 
-app.use(express.json()); // Gør det muligt at læse JSON i request body
-
-// Routes - Her "samler" du alle dine endpoints
-// Alle ruter i posterRoutes vil nu starte med /api/posters
-app.use('/api/posters', posterRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/genres', genreRoutes);
+// Routes
+app.use('/api/auth', authRouter);         // POST /api/auth/login
+app.use('/api/posters', posterRoutes);    // CRUD plakater
+app.use('/api/users', userRoutes);        // CRUD brugere
+app.use('/api/genres', genreRoutes);      // CRUD genrer
+app.use('/api/cart', cartRoutes);         // CRUD kurv-linjer
+app.use('/api/ratings', ratingRoutes);    // CRUD ratings
 
 // Basis-rute til test
 app.get('/', (req, res) => {

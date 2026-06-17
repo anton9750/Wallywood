@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 async function processCSV(fileName: string, callback: (row: any) => Promise<void>) {
     const filePath = path.join(__dirname, 'data', fileName);
-    
+
     return new Promise((resolve, reject) => {
         const results: any[] = [];
         fs.createReadStream(filePath)
@@ -64,7 +64,7 @@ async function main() {
         });
     });
 
-    // 3. Seed Relationer
+    // 3. Seed Genre-Poster Relationer
     await processCSV('genrePosterRel.csv', async (row) => {
         try {
             await prisma.genrePosterRel.create({
@@ -91,6 +91,34 @@ async function main() {
                 password: row.password,
                 role: row.role || "USER",
                 isActive: row.isActive === 'true'
+            }
+        });
+    });
+
+    // 5. Seed CartLines
+    await processCSV('cartLines.csv', async (row) => {
+        await prisma.cartLine.upsert({
+            where: { id: parseInt(row.id) },
+            update: {},
+            create: {
+                id: parseInt(row.id),
+                userId: parseInt(row.userId),
+                posterId: parseInt(row.posterId),
+                quantity: parseInt(row.quantity)
+            }
+        });
+    });
+
+    // 6. Seed UserRatings
+    await processCSV('userRatings.csv', async (row) => {
+        await prisma.userRating.upsert({
+            where: { id: parseInt(row.id) },
+            update: {},
+            create: {
+                id: parseInt(row.id),
+                userId: parseInt(row.userId),
+                posterId: parseInt(row.posterId),
+                numStars: parseInt(row.numStars)
             }
         });
     });
