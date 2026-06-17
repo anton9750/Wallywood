@@ -3,10 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import csv from 'csv-parser';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-// Konfiguration af sti-variable til ES-moduler
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -78,17 +78,18 @@ async function main() {
         }
     });
 
-    // 4. Seed Brugere
+    // 4. Seed Brugere (Med hashing!)
     await processCSV('user.csv', async (row) => {
+        const hashedPassword = await bcrypt.hash(row.password, 10);
         await prisma.user.upsert({
             where: { email: row.email },
-            update: {},
+            update: { password: hashedPassword }, // Ensure existing users get the hash
             create: {
                 id: parseInt(row.id),
                 firstname: row.firstname,
                 lastname: row.lastname,
                 email: row.email,
-                password: row.password,
+                password: hashedPassword,
                 role: row.role || "USER",
                 isActive: row.isActive === 'true'
             }
