@@ -1,0 +1,3 @@
+"id","firstname","lastname","email","password","role","isActive"
+1,"Admin","Admin","info@webudvikler.dk","password","ADMIN",1
+2,"Testbruger","","alm@webudvikler.dk","password","USER",1

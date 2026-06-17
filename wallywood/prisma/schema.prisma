@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int          @id @default(autoincrement())
+  firstname String
+  lastname  String
+  email     String       @unique
+  password  String
+  role      String       @default("USER")
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  cartLines CartLine[]
+  ratings   UserRating[]
+}
+
+model Poster {
+  id          Int              @id @default(autoincrement())
+  name        String
+  slug        String           @unique
+  description String?          @db.Text
+  image       String
+  width       Int
+  height      Int
+  price       Decimal          @db.Decimal(10, 2)
+  stock       Int
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  genres      GenrePosterRel[]
+  cartLines   CartLine[]
+  ratings     UserRating[]
+}
+
+model Genre {
+  id        Int              @id @default(autoincrement())
+  name      String
+  slug      String           @unique
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  posters   GenrePosterRel[]
+}
+
+model GenrePosterRel {
+  genreId  Int
+  posterId Int
+  genre    Genre  @relation(fields: [genreId], references: [id])
+  poster   Poster @relation(fields: [posterId], references: [id])
+
+  @@id([genreId, posterId])
+}
+
+model CartLine {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  posterId  Int
+  quantity  Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  poster    Poster   @relation(fields: [posterId], references: [id])
+}
+
+model UserRating {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  posterId  Int
+  numStars  Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  poster    Poster   @relation(fields: [posterId], references: [id])
+}
