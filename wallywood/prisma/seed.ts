@@ -16,27 +16,28 @@ async function processCSV(fileName: string, callback: (row: any) => Promise<void
     return new Promise((resolve, reject) => {
         const results: any[] = [];
         fs.createReadStream(filePath)
-            .pipe(csv())
-            .on('data', (data) => results.push(data))
-            .on('end', async () => {
+            .pipe(csv()) 
+            .on('data', (data) => results.push(data)) // .on('data'): En "event listener" der trigger for hver række, der læses fra filen. Den sender rækken videre til vores array.
+            .on('end', async () => { // .on('end'): Trigger når hele filen er læst færdig, hvilket lader os starte behandlingen af dataen.
                 for (const row of results) {
                     await callback(row);
                 }
                 console.log(`Færdig med at importere: ${fileName}`);
                 resolve(true);
             })
-            .on('error', reject);
+            .on('error', reject); // .on('error'): En "fang-fejl" mekanisme, der stopper processen og sender fejlen videre, hvis filen f.eks. mangler eller er korrupt.
     });
 }
 
 async function main() {
     console.log("Starter seeding...");
 
-    // 1. Seed Genres
+    // .upsert() er en avanceret metode: Den prøver først at finde posten (via where). 
+    // Hvis den findes, køres update-logikken; hvis ikke, køres create-logikken.
     await processCSV('genre.csv', async (row) => {
         await prisma.genre.upsert({
             where: { slug: row.slug },
-            update: {},
+            update: {}, 
             create: {
                 id: parseInt(row.id),
                 name: row.title,
@@ -45,7 +46,6 @@ async function main() {
         });
     });
 
-    // 2. Seed Posters
     await processCSV('poster.csv', async (row) => {
         await prisma.poster.upsert({
             where: { slug: row.slug },
@@ -64,7 +64,7 @@ async function main() {
         });
     });
 
-    // 3. Seed Genre-Poster Relationer
+    // try-catch blokken bruges her til at håndtere fejl i relationer (f.eks. hvis vi prøver at indsætte en dublet-relation), uden at hele scriptet crasher.
     await processCSV('genrePosterRel.csv', async (row) => {
         try {
             await prisma.genrePosterRel.create({
@@ -74,16 +74,15 @@ async function main() {
                 }
             });
         } catch (e) {
-            // Spring over hvis relationen allerede findes
         }
     });
 
-    // 4. Seed Brugere (Med hashing!)
+    // bcrypt.hash() er en asynkron krypteringsfunktion. 10 angiver "cost factor" (hvor mange gange der hashes), hvilket gør det beregningsmæssigt tungt og sikkert.
     await processCSV('user.csv', async (row) => {
-        const hashedPassword = await bcrypt.hash(row.password, 10);
+        const hashedPassword = await bcrypt.hash(row.password, 10); 
         await prisma.user.upsert({
             where: { email: row.email },
-            update: { password: hashedPassword }, // Ensure existing users get the hash
+            update: { password: hashedPassword },
             create: {
                 id: parseInt(row.id),
                 firstname: row.firstname,
@@ -96,7 +95,6 @@ async function main() {
         });
     });
 
-    // 5. Seed CartLines
     await processCSV('cartLines.csv', async (row) => {
         await prisma.cartLine.upsert({
             where: { id: parseInt(row.id) },
@@ -110,7 +108,6 @@ async function main() {
         });
     });
 
-    // 6. Seed UserRatings
     await processCSV('userRatings.csv', async (row) => {
         await prisma.userRating.upsert({
             where: { id: parseInt(row.id) },
@@ -133,5 +130,6 @@ main()
         process.exit(1);
     })
     .finally(async () => {
+        // $disconnect() sørger for at forbindelsen til databasen bliver lukket korrekt, når scriptet er færdigt, så applikationen ikke "hænger".
         await prisma.$disconnect();
     });
