@@ -1,123 +1,90 @@
 import { PrismaClient } from '@prisma/client';
-import fs from 'fs';
+import fs from 'fs'; //skriv og læs harddisk
 import path from 'path';
 import { fileURLToPath } from 'url';
 import csv from 'csv-parser';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function processCSV(fileName: string, callback: (row: any) => Promise<void>) {
-    const filePath = path.join(__dirname, 'data', fileName);
-
     return new Promise((resolve, reject) => {
         const results: any[] = [];
-        fs.createReadStream(filePath)
-            .pipe(csv()) 
-            .on('data', (data) => results.push(data)) // .on('data'): En "event listener" der trigger for hver række
-            .on('end', async () => { // .on('end'): Trigger når hele filen er læst færdig, hvilket lader os starte behandlingen af dataen.
-                for (const row of results) {
-                    await callback(row);
-                }
+        fs.createReadStream(path.join(__dirname, 'data', fileName))
+            .pipe(csv())  // csv-parser
+            .on('data', (data) => results.push(data)) // .on('data'): En "event listener" der trigger for hver række.
+            .on('end', async () => { // .on('end'): Trigger når hele filen er læst færdig, hvilket lader os starte behandlingen.
+                for (const row of results) await callback(row);
                 console.log(`Færdig med at importere: ${fileName}`);
                 resolve(true);
             })
-            .on('error', reject); // .on('error'): En "fang-fejl" mekanisme, der stopper processen og sender fejlen videre, hvis filen f.eks. mangler eller er korrupt.
+            .on('error', reject); // fejl
     });
 }
 
 async function main() {
     console.log("Starter seeding...");
 
-    // .upsert() er en avanceret metode: Den prøver først at finde posten (via where). 
-    // Hvis den findes, køres update-logikken; hvis ikke, køres create-logikken.
-    await processCSV('genre.csv', async (row) => {
+    // Genre: destructuring
+    await processCSV('genre.csv', async ({ id, title: name, slug }) => {
         await prisma.genre.upsert({
-            where: { slug: row.slug },
+            where: { slug },
             update: {}, 
-            create: {
-                id: parseInt(row.id),
-                name: row.title,
-                slug: row.slug
-            }
+            create: { id: parseInt(id), name, slug } 
+
         });
     });
 
-    await processCSV('poster.csv', async (row) => {
+    // Poster: Destructuring
+    await processCSV('poster.csv', async ({ id, name, slug, description, image, width, height, price, stock }) => {
         await prisma.poster.upsert({
-            where: { slug: row.slug },
+            where: { slug },
             update: {},
-            create: {
-                id: parseInt(row.id),
-                name: row.name,
-                slug: row.slug,
-                description: row.description || "",
-                image: row.image,
-                width: parseInt(row.width),
-                height: parseInt(row.height),
-                price: parseFloat(row.price),
-                stock: parseInt(row.stock)
+            create: { 
+                id: parseInt(id), name, slug, image, 
+                description: description || "", 
+                width: parseInt(width), height: parseInt(height), 
+                price: parseFloat(price), stock: parseInt(stock) 
             }
         });
     });
 
-    // try-catch blokken bruges her til at håndtere fejl i relationer 
-    await processCSV('genrePosterRel.csv', async (row) => {
+    await processCSV('genrePosterRel.csv', async ({ genreId, posterId }) => {
         try {
-            await prisma.genrePosterRel.create({
-                data: {
-                    genreId: parseInt(row.genreId),
-                    posterId: parseInt(row.posterId)
-                }
+            await prisma.genrePosterRel.create({ 
+                data: { genreId: parseInt(genreId), posterId: parseInt(posterId) } 
             });
-        } catch (e) {
-        }
+        } catch {}
     });
-
-    // bcrypt.hash() er en asynkron krypteringsfunktion. 10 angiver "cost factor" (hvor mange gange der hashes), hvilket gør det beregningsmæssigt tungt og sikkert.
-    await processCSV('user.csv', async (row) => {
-        const hashedPassword = await bcrypt.hash(row.password, 10); 
+                   //user destructuring
+    await processCSV('user.csv', async ({ id, firstname, lastname, email, password, role, isActive }) => {
+        const hashedPassword = await bcrypt.hash(password, 10); // bcrypt.hash
         await prisma.user.upsert({
-            where: { email: row.email },
+            where: { email },
             update: { password: hashedPassword },
-            create: {
-                id: parseInt(row.id),
-                firstname: row.firstname,
-                lastname: row.lastname,
-                email: row.email,
-                password: hashedPassword,
-                role: row.role || "USER",
-                isActive: row.isActive === 'true'
+            create: { 
+                id: parseInt(id), firstname, lastname, email, 
+                password: hashedPassword, 
+                role: role || "USER", 
+                isActive: isActive === 'true' 
             }
         });
     });
-
-    await processCSV('cartLines.csv', async (row) => {
+                            //cartlines deestructing
+    await processCSV('cartLines.csv', async ({ id, userId, posterId, quantity }) => {
         await prisma.cartLine.upsert({
-            where: { id: parseInt(row.id) },
+            where: { id: parseInt(id) },
             update: {},
-            create: {
-                id: parseInt(row.id),
-                userId: parseInt(row.userId),
-                posterId: parseInt(row.posterId),
-                quantity: parseInt(row.quantity)
-            }
+            create: { id: parseInt(id), userId: parseInt(userId), posterId: parseInt(posterId), quantity: parseInt(quantity) }
         });
     });
-
-    await processCSV('userRatings.csv', async (row) => {
+                        // userratings destructructing
+    await processCSV('userRatings.csv', async ({ id, userId, posterId, numStars }) => {
         await prisma.userRating.upsert({
-            where: { id: parseInt(row.id) },
+            where: { id: parseInt(id) },
             update: {},
-            create: {
-                id: parseInt(row.id),
-                userId: parseInt(row.userId),
-                posterId: parseInt(row.posterId),
-                numStars: parseInt(row.numStars)
-            }
+            create: { id: parseInt(id), userId: parseInt(userId), posterId: parseInt(posterId), numStars: parseInt(numStars) }
         });
     });
 
@@ -125,11 +92,8 @@ async function main() {
 }
 
 main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
+    .catch(console.error)
     .finally(async () => {
-        // $disconnect() sørger for at forbindelsen til databasen bliver lukket korrekt, når scriptet er færdigt, så applikationen ikke "hænger".
+        // lukkes pænt
         await prisma.$disconnect();
     });
