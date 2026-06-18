@@ -17,7 +17,7 @@ async function processCSV(fileName: string, callback: (row: any) => Promise<void
         const results: any[] = [];
         fs.createReadStream(filePath)
             .pipe(csv()) 
-            .on('data', (data) => results.push(data)) // .on('data'): En "event listener" der trigger for hver række, der læses fra filen. Den sender rækken videre til vores array.
+            .on('data', (data) => results.push(data)) // .on('data'): En "event listener" der trigger for hver række
             .on('end', async () => { // .on('end'): Trigger når hele filen er læst færdig, hvilket lader os starte behandlingen af dataen.
                 for (const row of results) {
                     await callback(row);
@@ -64,7 +64,7 @@ async function main() {
         });
     });
 
-    // try-catch blokken bruges her til at håndtere fejl i relationer (f.eks. hvis vi prøver at indsætte en dublet-relation), uden at hele scriptet crasher.
+    // try-catch blokken bruges her til at håndtere fejl i relationer 
     await processCSV('genrePosterRel.csv', async (row) => {
         try {
             await prisma.genrePosterRel.create({

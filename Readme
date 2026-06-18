@@ -1,0 +1,32 @@
+Wallywood API
+Et robust RESTful API bygget med Node.js, TypeScript, Express og Prisma til Wallywood – en webshop der sælger filmplakater. Projektet indeholder fuld CRUD-funktionalitet, rollebaseret adgangskontrol (ADMIN), database-seeding via CSV-filer og JWT-baseret autentificering.
+
+Tech Stack
+Runtime: Node.js
+Language: TypeScript
+Framework: Express.js
+ORM: Prisma
+Database: MySQL
+Authentication: JWT (JSON Web Tokens) & Bcrypt
+
+Installation
+For at køre projektet lokalt, skal du først klone repositoryet til din maskine: git clone . Gå derefter ind i mappen med cd wallywood. Installer alle nødvendige afhængigheder ved at køre npm install. Når dette er gjort, skal du oprette en .env fil i roden af projektet, hvor du angiver dine miljøvariabler: DATABASE_URL="mysql://brugernavn:adgangskode@localhost:3306/wallywood", JWT_SECRET="din_hemmelige_nøgle_her" og PORT=3000. Sørg for at din MySQL-server kører, og opret en database med navnet wallywood. Klargør derefter din database ved at køre kommandoerne npx prisma generate, npx prisma migrate deploy og npx prisma db seed. Nu er projektet klar til brug. Du kan starte serveren i udviklingstilstand ved at køre npm run dev, eller bygge og starte den til produktion med npm run build og npm run start. API'et vil herefter køre på http://localhost:3000.
+
+API Endpoints
+API'et er opdelt i forskellige moduler. Auth (POST /api/auth/login) bruges til at logge ind og modtage en JWT token. Posters (GET /api/posters, GET /api/posters/:id) er åbne for alle, mens POST /api/posters, PUT /api/posters/:id og DELETE /api/posters/:id kræver ADMIN-rolle. Det samme gælder Genres, hvor GET-ruterne er åbne, og POST, PUT, DELETE kræver ADMIN. Users kræver ADMIN-rolle til alle endpoints (GET, POST, PUT, DELETE). Cart og Ratings har både åbne GET-endpoints og ADMIN-beskyttede skrive-operationer. Husk altid at vedhæfte din JWT token i headeren ved beskyttede kald: Authorization: Bearer .
+
+Dokumentation
+En detaljeret oversigt over alle endpoints, requests og svar-eksempler kan findes i Postman-dokumentationen: [Indsæt link til Postman her].
+
+Projektstruktur
+Projektet er organiseret for at sikre god struktur og læsbarhed:
+wallywood/
+├── prisma/             # Indeholder schema.prisma, migrationer og seed-scripts
+├── src/
+│ ├── controllers/      # Forretningslogik til håndtering af requests
+│ ├── middleware/       # Autentificering og rollestyring
+│ ├── routes/           # API endpoint definitioner
+│ └── index.ts          # App entry point og konfiguration
+├── .env                # Miljøvariabler (skal ikke pushes til Git)
+├── package.json        # Dependencies og scripts
+└── tsconfig.json       # TypeScript konfiguration

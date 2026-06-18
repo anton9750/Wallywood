@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret"; // Husk at sætte denne i din .env
+const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     const { email, password } = req.body;

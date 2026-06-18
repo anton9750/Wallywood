@@ -3,6 +3,7 @@ import {
     getAllRatings,
     getRatingsByPoster,
     createRating,
+    updateRating,
     deleteRating
 } from '../controllers/ratingController.js';
 import { authorizeAdmin } from '../middleware/authMiddleware.js';
@@ -19,7 +20,7 @@ router.get('/poster/:posterId', getRatingsByPoster);
 router.post('/', authorizeAdmin, createRating);
  
 // PUT /api/ratings/:id                - Opdater rating (kræver admin)
-// NOTE: updateRating is not exported from ratingController.js — route disabled until available
+router.put('/:id', authorizeAdmin, updateRating);
  
 // DELETE /api/ratings/:id             - Slet rating (kræver admin)
 router.delete('/:id', authorizeAdmin, deleteRating);
