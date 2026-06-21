@@ -16,7 +16,7 @@ API Endpoints
 API'et er opdelt i forskellige moduler. Auth (POST /api/auth/login) bruges til at logge ind og modtage en JWT token. Posters (GET /api/posters, GET /api/posters/:id) er åbne for alle, mens POST /api/posters, PUT /api/posters/:id og DELETE /api/posters/:id kræver ADMIN-rolle. Det samme gælder Genres, hvor GET-ruterne er åbne, og POST, PUT, DELETE kræver ADMIN. Users kræver ADMIN-rolle til alle endpoints (GET, POST, PUT, DELETE). Cart og Ratings har både åbne GET-endpoints og ADMIN-beskyttede skrive-operationer. Husk altid at vedhæfte din JWT token i headeren ved beskyttede kald: Authorization: Bearer .
 
 Dokumentation
-En detaljeret oversigt over alle endpoints, requests og svar-eksempler kan findes i Postman-dokumentationen: [https://documenter.getpostman.com/view/55265056/2sBXwvKUPC#7429facf-ac2b-4703-abeb-7b5701f83c96].
+En detaljeret oversigt over alle endpoints, requests og svar-eksempler kan findes i Postman-dokumentationen: [https://documenter.getpostman.com/view/55265056/2sBXwvKUPC].
 
 Projektstruktur
 Projektet er organiseret for at sikre god struktur og læsbarhed:
