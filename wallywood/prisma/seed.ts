@@ -85,9 +85,9 @@ async function main() {
             where: { id: parseInt(id) },
             update: {},
             create: { id: parseInt(id), userId: parseInt(userId), posterId: parseInt(posterId), numStars: parseInt(numStars) }
-        });
+        }); 
     });
-
+    
     console.log("Alt data er nu succesfuldt seedet!");
 }
 
